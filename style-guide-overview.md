@@ -1,10 +1,33 @@
-# Rules of Thumb
+# Simple SQL Style Guide
+
+## Rules of Thumb
 
 1. Write for clarity
 2. Write for readability
 3. Write for sanity
 
 Make things easy on future you or anyone who comes after you: write simply, format sensibly, and comment generously.
+
+## Why This Style Guide?
+
+You have a variety of options available to you when it comes to picking or developing a style guide for your SQL code. If you take a look at a few, such as those listed below, you will notice that some agreement exists between them, but that they will often directly contradict one another (such as whether or not to line up keywords in certain ways, capitalization patterns to embrace, etc.).
+
+At the end of the day, absent any formal adoption of policy, most folks are going to write how they are going to write. So, this is less of a de facto guide and more of a suggestion. Code that falls within this range of formats is code that I find easiest to work with. The further afield that code goes from this range of formats makes me less inclined to want to interact with it.
+
+The formats described here are not particularly rigid. They are simply the observations I've collected while reading other people's code, maintaining my own, and taking note of what seeme to make things easier or more difficult (and what, truly, did not matter much in the long run).
+
+**Companies**
+
+- [GitLab](https://about.gitlab.com/handbook/business-technology/data-team/platform/sql-style-guide/)
+- [Kickstarter](https://gist.github.com/fredbenenson/7bb92718e19138c20591)
+- [Mozilla](https://docs.telemetry.mozilla.org/concepts/sql_style.html)
+
+**Individuals**
+
+- [Ben Brumm](https://www.databasestar.com/sql-best-practices/)
+- [John McCall](https://tsqlstyle.lowlydba.com/)
+- [Matt Mazur](https://github.com/mattm/sql-style-guide)
+- [Simon Holywell](https://www.sqlstyle.guide/)
 
 # Layout
 
@@ -30,7 +53,7 @@ Make things easy on future you or anyone who comes after you: write simply, form
 
 Before you start writing your query, make sure that the text editor that you are using is set to use **soft tabs** rather than hard. Soft tabs work better because the visual indent level of a tab might differ depending on the text editor being used. Some text editors assume that your tab size is the equivalent of 8 spaces, others assume 4. If you copy-paste code from other sources, you might end up with a combination of hard and soft tabs, so be wary of that and clean up anything that you paste into your script.
 
-Next, pick your preferred tab size. A tab size of 4 is a safe pick. Personally, I use a tab size of 2 because a lot of my queries involve nesting a few levels deep, so it helps prevent the code from getting so long that it requires scrolling horizontally.
+Next, pick your preferred tab size. A tab size of 4 is a safe pick. Personally, I use a tab size of 2 because a lot of my queries involve nesting a few levels deep, so it helps to prevent the code from getting so long that it requires horizontally scrolling.
 
 There are tons of options out there for text editors; most all are good. If you've not shopped around much for one, check out these three for a start. You'll figure out your preferences soon enough.
 
@@ -183,7 +206,8 @@ Of course, breaking it out with more generous white space and explicitly prefixi
 
 ```sql
 
--- The implicit aliases are easier to recognize, now.
+-- The implicit aliases are easier to recognize, now, but
+-- it still isn't ideal.
 SELECT
   cust.id customer_id,
   cust.fname first_name,
@@ -202,9 +226,33 @@ GROUP BY
   
 ```
 
-However, it'd still probably be easier to visually parse this thing if we could just look for `as` and let the syntax highlighting help us out a bit more. For joins, it's especially useful to have the alias explicitly declared since syntax highlighting will make it easier to spot. In short queries like this example, it doesn't seem like much. But when you're wading through hundreds of lines of code, every little bit helps.
+It'd still be easier to visually parse this thing if we could just look for `as` and let the syntax highlighting help us out a bit more. For joins, it's especially useful to have the alias explicitly declared since syntax highlighting will make it easier to spot. In short queries like this example, it doesn't seem like much. But when you're wading through hundreds of lines of code, every little bit helps.
 
-Bottom line: when you alias something, be explicit and use the `as` keyword.
+Additionally, when working in especially large queries, it's nice to be able to hit `ctrl + f` and have the `as` keyword as something to search for in conjunction with a table alias. It's much easier to search for a table that's been aliased `ea` if we can search for `as ea`, otherwise we'll get a lot of false positives for such a common combination of letters.
+
+```sql
+
+-- Now we have a better visual indicator of where aliases
+-- are being declared.
+SELECT
+  cust.id as customer_id,
+  cust.fname as first_name,
+  cust.lname as last_name,
+  SUM(ord.order_value) as customer_lifetime_value
+
+FROM Customers as cust
+
+LEFT JOIN Orders as ord
+  ON cust.id = ord.customer_id
+
+GROUP BY
+  cust.id,
+  cust.fname,
+  cust.lname
+  
+```
+
+Bottom line: when you alias something (whether columns or tables), be explicit and use the `as` keyword.
 
 #### Explicit - Field Source
 
