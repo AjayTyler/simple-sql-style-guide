@@ -12,7 +12,6 @@ Make things easy on future you or anyone who comes after you: write simply, form
 
 - Use soft tabs, not hard
 - Set your tab size to 2 or 4 (your pick)
-- Put commas at the end, not the beginning (your pick)
 - Favor tall and narrow over short and wide
 - Don't re-use table aliases (re-using column aliases is fine)
 - When aliasing, be explicit rather than implicit
@@ -22,7 +21,7 @@ Make things easy on future you or anyone who comes after you: write simply, form
     - When more than one table is queried, include the alias in the column selection (e.g. `table1.column1`)
 - `FROM` / `JOIN`:
   - **Never** use implicit join syntax (i.e. placing join criteria in the `WHERE` clause)
-  - List each source on its own line with a meaningful alias
+  - List each source on its own line with a meaningful, succinct alias
   - List each join criteria on its own line beneath the table, indented
 - `WHERE`: When multiple criteria are used, list indented beneath, each on their own line
 - `GROUP BY`: Same style as with SELECT
@@ -36,8 +35,8 @@ Next, pick your preferred tab size. A tab size of 4 is a safe pick. Personally, 
 There are tons of options out there for text editors; most all are good. If you've not shopped around much for one, check out these three for a start. You'll figure out your preferences soon enough.
 
 1. Visual Studio Code
-2. Notepad++
-3. Atom
+2. Sublime Text
+3. Notepad++
 
 ## Style Samples
 
@@ -47,7 +46,7 @@ There are tons of options out there for text editors; most all are good. If you'
 
 ### General Format
 
-I'd recommend formatting your code so that it is tall and narrow rather than short and wide. This makes it much easier to compare queries side-by-side. So, be generous with your vertical white space and stingy with the horizontal.
+Format your code so that it is tall and narrow rather than short and wide. This makes it much easier to compare queries side-by-side and generally improves readability. So, be generous with your vertical white space and stingy with the horizontal.
 
 For simple queries, layout is a non-issue. You could put it all on one line without any readability issues.
 
@@ -79,7 +78,7 @@ GROUP BY cust.id, fname, lname
 
 I recommend the following format:
 
-- `SELECT` statements with columns listed on their own lines, indented one tab
+- `SELECT` statements with columns listed on their own lines, indented one level
 - `FROM` / `JOIN` on their own line and aliased with a meaningful name that's unique within the query
 - Explicitly list the join type (`INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN`, `FULL OUTER JOIN`)
 - Joins have a short, meaningful alias
@@ -108,13 +107,13 @@ GROUP BY
 
 ```
 
-On the note of maintenance, I'd recommend that you avoid the instinct to try to align things perfectly. It looks nice, but it just makes maintenance a pain in the event that you need to go in later to update something, change things around, or add more complex logic. Only do that type of thing if you're formatting a textbook or something. It's not worth it, especially if someone other than you needs to come in at a later point.
+On the note of maintenance, I'd recommend that you avoid the instinct to try to align things perfectly. It looks nice, but it just makes maintenance a painful chore in the event that you need to update something later, change things around, or add more complex logic. Only try for picture-perfect alignment if you're formatting a textbook or something. It's not worth it, especially if someone other than you needs to come in at a later point.
 
 ```sql
 
 -- It looks nice, but it's a pain to do this while you're developing a query.
 -- If you have to add in a new line that's longer than the rest, then you have
--- to go back and adjust everything else. Just don't do it.
+-- to go back and adjust everything else, which is wasted time. Just don't do it.
 SELECT
     cust.id                      as customer_id,
     cust.fname                   as first_name,
@@ -137,7 +136,7 @@ GROUP BY
 
 Some people prefer to put commas at the beginning of a line. I did that for a while; I kept forgetting to put them at the end of a line, so it was nice to just put them up front where I wouldn't forget about it. Eventually, I went back to putting commas at the end of my lines just so things would left-align nicely without requiring an additional space from time to time. Also, I didn't like the way it looked with commas at the start.
 
-However, that is a loose recommendation. If your code is clear, readable, and easy for a newcomer to understand well enough and make a change, you're already ahead of the game where it counts. Put your commas where you want them to go.
+However, that is a loose recommendation. If your code is clear, readable, and easy for a newcomer to understand well enough and make a change, you're already ahead of the game where it counts. Put your commas where you want them to go; just be consistent.
 
 ```sql
 
@@ -166,9 +165,9 @@ When aliasing a column, join, or subquery, it pays to make the alias:
 
 - Explicit (instead of implicit)
 - Meaningful (rather than arbitrary)
-- Succinct (which you probably already do)
+- Succinct (rather than repetitive)
 
-#### Explicit
+#### Explicit - Alias Keyword
 
 Let's take our dense, three-line aliased query from before and remove the `AS` keyword (making the alias declarations implicit). I don't know about you, but certainly find it to be a bit more of a chore to take in at a glance.
 
@@ -207,6 +206,50 @@ However, it'd still probably be easier to visually parse this thing if we could 
 
 Bottom line: when you alias something, be explicit and use the `as` keyword.
 
+#### Explicit - Field Source
+
+When you have more than one table referenced in a query, **explicitly list the source in the column selection**. Sometimes, this is required in order for the SQL to execute: if the column name exists in multiple tables, you'll get an error about an ambiguous column reference.
+
+However, even if it lets you execute the query, a human trying to read the code may get frustrated when trying to figure out where each field comes from. Even short queries can be a headache to parse.
+
+```sql
+
+SELECT
+  id, -- is this the order ID? Customer ID?
+  status, -- is this a customer's status? Order status?
+  value, -- is this the order value? Something else?
+  billing_state -- is this tied to the customer? The order itself?
+
+FROM Database.Schema.Customers as cust
+
+LEFT JOIN Database.Schema.Orders as ord
+  ON cust.id = ord.customer_id
+
+LEFT JOIN Database.Schema.Interactions_Agg as ntr
+  ON cust.id = ntr.customer_id
+
+```
+So, whenever more than one table is being referenced, be sure to keep the reference as part of the column selection.
+
+```sql
+
+-- This is explicit; the source for each field is self-evident.
+SELECT
+  cust.id,
+  cust.status,
+  ntr.value,
+  ord.billing_state
+
+FROM Database.Schema.Customers as cust
+
+LEFT JOIN Database.Schema.Orders as ord
+  ON cust.id = ord.customer_id
+
+LEFT JOIN Database.Schema.Interactions_Agg as ntr
+  ON cust.id = ntr.customer_id
+
+```
+
 #### Meaningful
 
 Perhaps you've seen queries that have joins that look like this:
@@ -215,7 +258,7 @@ Perhaps you've seen queries that have joins that look like this:
 
 SELECT
   A.id as customer_id,
-  C.status as customer_in_rewards_program,
+  C.status as rewards_program_status,
   COUNT(DISTINCT B.order_id) as lifetime_orders,
   SUM(B.order_value) as lifetime_sales
 
@@ -229,23 +272,74 @@ LEFT JOIN Database.Schema.Rewards_Program as C
 
 ```
 
-Using arbitrary aliases keeps things short, and you don't have to think about a name or abbreviation. However, it becomes a massive nuisance when you try to orient yourself to a script that's been written this way, or when you must re-orient yourself after not looking at it for a while. Arbitrary aliases require you have to memorize what letter maps to which table, and you have no hints that an abbreviation would provide. You also end up scrolling up and down, reading the column that's called from the table, and then searching for the alias so that you can find out which table it's coming from.
+Using arbitrary aliases keeps things short, and you don't have to think about a name or abbreviation. However, it becomes a massive nuisance when you try to orient yourself to a script that's been written this way, or when you must re-orient yourself after not looking at it for a while.
+
+Arbitrary aliases require you have to memorize what letter maps to which table, and you have no hints that an abbreviation would provide. You also end up scrolling up and down, reading the column that's called from the table, and then searching for the alias so that you can find out which table it's coming from.
 
 Additionally, it's also helpful to keep your aliases unique within a query (i.e. it's best not to use the same alias inside and outside of a subquery). Otherwise, it can get a little tricky to remember.
 
 #### Succinct
 
-If it's long, you might as well just use the table name.
+When making an alias for a table, it helps to make it succinct--no more than three or four characters. This helps cut down on line length for your code, allows you the opportunity to provide a more meaningful alias for tables with somewhat cryptic names, and overall helps to reduce the density of your query.
+
+```sql
+
+/* Table Name Repeated */
+
+-- This doesn't look too bad, but real-life table names are seldom
+-- so human friendly, and look more like 'tbl_orc_cust' which leads
+-- to much denser code which becomes a headache to read.
+SELECT
+  customers.id as customer_id,
+  program.status as rewards_program_status,
+  COUNT(DISTINCT orders.order_id) as lifetime_orders,
+  SUM(orders.order_value) as lifetime_sales
+
+FROM Database.Schema.Customers as customers
+
+LEFT JOIN Database.Schema.Orders as orders
+  ON A.id = B.customer_id
+
+LEFT JOIN Database.Schema.Rewards_Program as program
+  ON A.id = C.customer_id
+
+WHERE customers.billing_state in ('KS', 'TX')
+  AND orders.category = 'Combi-Ovens'
+  AND program.status = 'Active'
+
+
+/* Short Table Alias */
+
+-- This, meanwhile, is easier to read at a glance.
+SELECT
+  cust.id as customer_id,
+  prog.status as rewards_program_status,
+  COUNT(DISTINCT ord.order_id) as lifetime_orders,
+  SUM(ord.order_value) as lifetime_sales
+
+FROM Database.Schema.Customers as cust
+
+LEFT JOIN Database.Schema.Orders as ord
+  ON cust.id = ord.customer_id
+
+LEFT JOIN Database.Schema.Rewards_Program as prog
+  ON cust.id = prog.customer_id
+
+WHERE cust.billing_state in ('KS', 'TX')
+  AND ord.category = 'Combi-Ovens'
+  AND prog.status = 'Active'
+
+```
 
 ### Commenting
 
 - Good comments are more important than how you lay them out
 - Put comments near the thing you're talking about
-- If you do something clever, comment to explain
+- If you do something clever or difficult, comment to explain it
 
-I recommend using multi-line comment format for headings and single line comments for explanation
+I recommend using the multi-line comments to create the equivalent of headings in largers queries, and single line comments for explanations.
 
-### Capitalize According to Convenience
+### Capitalize Keywords According to Convenience
 
 When it comes to capitalization, I recommend going with whatever promotes personal convenience. In my opinion:
 
@@ -326,5 +420,49 @@ where year(ord.trans_date) = year(current_date())
 
 ### Joins
 
-Do **_not_** use implicit joins. They are of the devil. They come from a time before `JOIN` clauses, and there is no need to use such anachronistic chicanery.
+Do **_not_** use implicit joins. They are of the devil. They come from a time before `JOIN` clauses, and there is no need to use such anachronistic chicanery. The only reason to know about them is for `UPDATE` statements in various SQL implementations, or to translate from legacy code.
 
+```sql
+
+SELECT
+  cust.id as customer_id,
+  program.status as rewards_program_status,
+  COUNT(DISTINCT orders.order_id) as lifetime_orders,
+  SUM(orders.order_value) as lifetime_sales
+
+FROM
+  Database.Schema.Customers as cust,
+  Database.Schema.Orders as ord,
+  Database.Schema.Rewards_Program as prog
+
+-- This is gross. Links between tables are mixed in with
+-- filtering logic, which makes it difficult to see what
+-- connects to what and in what ways.
+WHERE cust.id = ord.customer_id
+  AND cust.id = prog.customer_id
+  AND cust.billing_state = 'TX'
+  AND prog.status in ('Active', 'Targeted')
+
+```
+
+When joining tables, list the join critera as an indented separate line. Don't include them on the same line, as it tends to leads to horizontal scrolling, which becomes a pain to manage. Plus, for non-trivial joins that require more complex logic, it leads to a mess.
+
+```sql
+
+SELECT
+  cust.id as customer_id,
+  prog.status as rewards_program_status,
+  COUNT(DISTINCT ord.order_id) as lifetime_orders,
+  SUM(ord.order_value) as lifetime_sales
+
+FROM Database.Schema.Customers as cust
+
+LEFT JOIN Database.Schema.Orders as ord ON cust.id = ord.customer_id
+
+LEFT JOIN Database.Schema.Rewards_Program as prog ON cust.id = prog.customer_id
+
+WHERE cust.billing_state in ('KS', 'TX')
+  AND ord.category = 'Combi-Ovens'
+  AND prog.status = 'Active'
+
+```
