@@ -12,10 +12,6 @@ Make things easy on future you or anyone who comes after you: write simply, form
 
 You have a variety of options available to you when it comes to picking or developing a style guide for your SQL code. If you take a look at a few, such as those listed below, you will notice that some agreement exists between them, but that they will often directly contradict one another (such as whether or not to line up keywords in certain ways, capitalization patterns to embrace, etc.).
 
-At the end of the day, absent any formal adoption of policy, most folks are going to write how they are going to write. So, this is less of a de facto guide and more of a suggestion. Code that falls within this range of formats is code that I find easiest to work with. The further afield that code goes from this range of formats makes me less inclined to want to interact with it.
-
-The formats described here are not particularly rigid. They are simply the observations I've collected while reading other people's code, maintaining my own, and taking note of what seeme to make things easier or more difficult (and what, truly, did not matter much in the long run).
-
 **Companies**
 
 - [GitLab](https://about.gitlab.com/handbook/business-technology/data-team/platform/sql-style-guide/)
@@ -28,6 +24,11 @@ The formats described here are not particularly rigid. They are simply the obser
 - [John McCall](https://tsqlstyle.lowlydba.com/)
 - [Matt Mazur](https://github.com/mattm/sql-style-guide)
 - [Simon Holywell](https://www.sqlstyle.guide/)
+
+
+At the end of the day, absent any formal adoption of policy, most folks on a team are going to write how they are going to write. So, this is less of a de facto guide and more of a suggestion. Code that falls within this range of formats is code that I find easiest to work with. The further afield that code goes from this range of formats makes me less inclined to want to interact with it.
+
+The formats described here are not particularly rigid. They are simply the observations I've collected while reading other people's code, maintaining my own, and taking note of what seeme to make things easier or more difficult (and what, truly, did not matter much in the long run).
 
 # Layout
 
@@ -146,7 +147,7 @@ SELECT
 FROM Database.Schema.Customers   as cust
 
 LEFT JOIN Database.Schema.Orders as ord
-     ON cust.id = ord.customer_id
+    ON cust.id = ord.customer_id
 
 GROUP BY
     cust.id,
@@ -318,13 +319,17 @@ LEFT JOIN Database.Schema.Orders as B
 LEFT JOIN Database.Schema.Rewards_Program as C
   ON A.id = C.customer_id
 
+GROUP BY
+  A.id,
+  C.status
+
 ```
 
 Using arbitrary aliases keeps things short, and you don't have to think about a name or abbreviation. However, it becomes a massive nuisance when you try to orient yourself to a script that's been written this way, or when you must re-orient yourself after not looking at it for a while.
 
 Arbitrary aliases require you have to memorize what letter maps to which table, and you have no hints that an abbreviation would provide. You also end up scrolling up and down, reading the column that's called from the table, and then searching for the alias so that you can find out which table it's coming from.
 
-Additionally, it's also helpful to keep your aliases unique within a query (i.e. it's best not to use the same alias inside and outside of a subquery). Otherwise, it can get a little tricky to remember.
+Additionally, it's also helpful to keep your aliases unique within a query (i.e. it's best not to use the same alias inside and outside of a subquery). Otherwise, it can get a little tricky to remember what's being referenced where.
 
 #### Succinct
 
@@ -339,21 +344,36 @@ When making an alias for a table, it helps to make it succinct--no more than thr
 -- to much denser code which becomes a headache to read.
 SELECT
   customers.id as customer_id,
+  customers.customer_type as customer_type,
   program.status as rewards_program_status,
   COUNT(DISTINCT orders.order_id) as lifetime_orders,
-  SUM(orders.order_value) as lifetime_sales
+  SUM(orders.order_value) as lifetime_sales,
+
+  SUM(
+    CASE
+      WHEN
+        orders.discount_code is not NULL
+        AND customers.customer_type = 'Key Account'
+      THEN orders.order_value
+      ELSE 0
+    END
+  ) as lifetime_discounted_key_account_sales
 
 FROM Database.Schema.Customers as customers
 
 LEFT JOIN Database.Schema.Orders as orders
-  ON A.id = B.customer_id
+  ON customers.id = orders.customer_id
 
 LEFT JOIN Database.Schema.Rewards_Program as program
-  ON A.id = C.customer_id
+  ON customers.id = program.customer_id
 
 WHERE customers.billing_state in ('KS', 'TX')
   AND orders.category = 'Combi-Ovens'
-  AND program.status = 'Active'
+  AND program.status in ('Active', 'Target')
+
+GROUP BY
+  customers.id,
+  program.status
 
 
 /* Short Table Alias */
@@ -363,7 +383,17 @@ SELECT
   cust.id as customer_id,
   prog.status as rewards_program_status,
   COUNT(DISTINCT ord.order_id) as lifetime_orders,
-  SUM(ord.order_value) as lifetime_sales
+  SUM(ord.order_value) as lifetime_sales,
+
+  SUM(
+    CASE
+      WHEN
+        ord.discount_code is not NULL
+        AND cust.customer_type = 'Key Account'
+      THEN ord.order_value
+      ELSE 0
+    END
+  ) as lifetime_discounted_key_account_sales
 
 FROM Database.Schema.Customers as cust
 
@@ -375,7 +405,11 @@ LEFT JOIN Database.Schema.Rewards_Program as prog
 
 WHERE cust.billing_state in ('KS', 'TX')
   AND ord.category = 'Combi-Ovens'
-  AND prog.status = 'Active'
+  AND prog.status in ('Active', 'Target')
+
+GROUP BY
+  cust.id,
+  prog.status
 
 ```
 
@@ -411,11 +445,11 @@ My only real recommendation is not to go ALLCAPS on column names. There are enou
 ```sql
 
 select
- cust.id as customer_id,
- cust.customer_group as customer_marketing_group,
- ord.cart_size as items_in_cart,
- ord.order_value as total_order_value,
- ord.trans_date as order_date
+  cust.id as customer_id,
+  cust.customer_group as customer_marketing_group,
+  ord.cart_size as items_in_cart,
+  ord.order_value as total_order_value,
+  ord.trans_date as order_date
 
 from database.schema.orders as ord
 
@@ -431,11 +465,11 @@ where year(ord.trans_date) = year(current_date())
 ```sql
 
 SELECT
- cust.id as customer_id,
- cust.customer_group as customer_marketing_group,
- ord.cart_size as items_in_cart,
- ord.order_value as total_order_value,
- ord.trans_date as order_date
+  cust.id as customer_id,
+  cust.customer_group as customer_marketing_group,
+  ord.cart_size as items_in_cart,
+  ord.order_value as total_order_value,
+  ord.trans_date as order_date
 
 FROM Database.Schema.Orders as ord
 
@@ -451,11 +485,11 @@ WHERE YEAR(ord.trans_date) = YEAR(CURRENT_DATE())
 ```sql
 
 select
- cust.id as customer_id,
- cust.customer_group as customer_marketing_group,
- ord.cart_size as items_in_cart,
- ord.order_value as total_order_value,
- ord.trans_date as order_date
+  cust.id as customer_id,
+  cust.customer_group as customer_marketing_group,
+  ord.cart_size as items_in_cart,
+  ord.order_value as total_order_value,
+  ord.trans_date as order_date
 
 from DATABASE.SCHEMA.ORDERS as ord
 
@@ -468,7 +502,9 @@ where year(ord.trans_date) = year(current_date())
 
 ### Joins
 
-Do **_not_** use implicit joins. They are of the devil. They come from a time before `JOIN` clauses, and there is no need to use such anachronistic chicanery. The only reason to know about them is for `UPDATE` statements in various SQL implementations, or to translate from legacy code.
+Do **_not_** use implicit joins. They are of the devil. Modern syntax allows for a much more sustainable, modular encapsulation of join criteria and filtering logic into separate concerns.
+
+The implicit join syntax comes from a time before `JOIN` clauses, and there is no need to use such anachronistic chicanery. The only reason to know about them is for `UPDATE` statements in various SQL implementations, or to translate from legacy code.
 
 ```sql
 
@@ -481,15 +517,25 @@ SELECT
 FROM
   Database.Schema.Customers as cust,
   Database.Schema.Orders as ord,
-  Database.Schema.Rewards_Program as prog
+  Database.Schema.Rewards_Program as prog,
+  Database.Schema.Campaigns as camp
+
 
 -- This is gross. Links between tables are mixed in with
 -- filtering logic, which makes it difficult to see what
--- connects to what and in what ways.
-WHERE cust.id = ord.customer_id
-  AND cust.id = prog.customer_id
+-- connects to what and in what ways. Plus, it defaults
+-- to an inner join unless you include (+) in the logic,
+-- which is not an intuitive syntax.
+WHERE cust.id = ord.customer_id(+)
+  AND cust.id = prog.customer_id(+)
+  AND ord.campaign_id = camp.id(+)
+  AND camp.status = 'Active'
   AND cust.billing_state = 'TX'
   AND prog.status in ('Active', 'Targeted')
+
+GROUP BY
+  cust.id,
+  program.status
 
 ```
 
@@ -505,6 +551,7 @@ SELECT
 
 FROM Database.Schema.Customers as cust
 
+-- Don't do this: it will only cause problems.
 LEFT JOIN Database.Schema.Orders as ord ON cust.id = ord.customer_id
 
 LEFT JOIN Database.Schema.Rewards_Program as prog ON cust.id = prog.customer_id
@@ -512,5 +559,9 @@ LEFT JOIN Database.Schema.Rewards_Program as prog ON cust.id = prog.customer_id
 WHERE cust.billing_state in ('KS', 'TX')
   AND ord.category = 'Combi-Ovens'
   AND prog.status = 'Active'
+
+GROUP BY
+  cust.id,
+  program.status
 
 ```
