@@ -510,6 +510,8 @@ The implicit join syntax comes from a time before `JOIN` clauses, and there is n
 
 ```sql
 
+-- An example of what NOT to do when joining tables.
+
 SELECT
   cust.id as customer_id,
   program.status as rewards_program_status,
@@ -541,9 +543,11 @@ GROUP BY
 
 ```
 
-When joining tables, list the join critera as an indented separate line. Don't include them on the same line, as it tends to leads to horizontal scrolling, which becomes a pain to manage. Plus, for non-trivial joins that require more complex logic, it leads to a mess.
+When joining tables, list the join critera as an indented separate line. Don't include them on the same line, as it tends to leads to horizontal scrolling, which becomes a pain to manage. Plus, for non-trivial joins that require more complex logic for the join, it leads to a mess.
 
 ```sql
+
+-- Another example of what I do not recommended.
 
 SELECT
   cust.id as customer_id,
@@ -553,7 +557,7 @@ SELECT
 
 FROM Database.Schema.Customers as cust
 
--- Don't do this: it will only cause problems.
+-- Don't do this. Please.
 LEFT JOIN Database.Schema.Orders as ord ON cust.id = ord.customer_id
 
 LEFT JOIN Database.Schema.Rewards_Program as prog ON cust.id = prog.customer_id
