@@ -8,6 +8,8 @@
 
 Make things easy on future you or anyone who comes after you: write simply, format sensibly, and comment generously.
 
+Also, _**NEVER**_ use a query builder. The code those things produce violate all three rules of thumb.
+
 ## Why This Style Guide?
 
 You have a variety of options available to you when it comes to picking or developing a style guide for your SQL code. If you take a look at a few, such as those listed below, you will notice that some agreement exists between them, but that they will often directly contradict one another (such as whether or not to line up keywords in certain ways, capitalization patterns to embrace, etc.).
