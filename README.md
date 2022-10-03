@@ -133,13 +133,15 @@ GROUP BY
 
 ```
 
-On the note of maintenance, I'd recommend that you avoid the instinct to try to align things perfectly. It looks nice, but it just makes maintenance a painful chore in the event that you need to update something later, change things around, or add more complex logic. Only try for picture-perfect alignment if you're formatting a textbook or something. It's not worth it, especially if someone other than you needs to come in at a later point.
+On the note of maintenance, I'd recommend that you avoid the instinct to try to align things perfectly. It looks nice, but it just makes maintenance a painful chore in the event that you need to update something later, change things around, or add more complex logic. Only try for picture-perfect alignment if you're formatting a textbook or something.
+
+If you find that it's helpful for yourself, or it brings you some special level of joy, then sure, go for it. Just be aware that it's usually not worth it, especially if someone other than you needs to come in at a later point. There's no guarantee that they'll preserve your formatting.
 
 ```sql
 
 -- It looks nice, but it's a pain to do this while you're developing a query.
 -- If you have to add in a new line that's longer than the rest, then you have
--- to go back and adjust everything else, which is wasted time. Just don't do it.
+-- to go back and adjust everything else, which is a lot of time.
 SELECT
     cust.id                      as customer_id,
     cust.fname                   as first_name,
@@ -313,6 +315,9 @@ SELECT
   COUNT(DISTINCT B.order_id) as lifetime_orders,
   SUM(B.order_value) as lifetime_sales
 
+-- These table aliases have no inherent meaning; they are
+-- just sequential letters assigned to a table based on
+-- the order it's referenced in the query.
 FROM Database.Schema.Customers as A
 
 LEFT JOIN Database.Schema.Orders as B
@@ -327,7 +332,7 @@ GROUP BY
 
 ```
 
-Using arbitrary aliases keeps things short, and you don't have to think about a name or abbreviation. However, it becomes a massive nuisance when you try to orient yourself to a script that's been written this way, or when you must re-orient yourself after not looking at it for a while.
+Using arbitrary aliases keeps things short, and you don't have to think about a name or abbreviation. However, it becomes a _massive_ nuisance when you try to orient yourself to a script that's been written this way, or when you must re-orient yourself after not looking at it for a while.
 
 Arbitrary aliases require you have to memorize what letter maps to which table, and you have no hints that an abbreviation would provide. You also end up scrolling up and down, reading the column that's called from the table, and then searching for the alias so that you can find out which table it's coming from.
 
@@ -335,7 +340,7 @@ Additionally, it's also helpful to keep your aliases unique within a query (i.e.
 
 #### Succinct
 
-When making an alias for a table, it helps to make it succinct--no more than three or four characters. This helps cut down on line length for your code, allows you the opportunity to provide a more meaningful alias for tables with somewhat cryptic names, and overall helps to reduce the density of your query.
+When making an alias for a table, it helps to make it succinct--no more than three or four characters (perhaps more if it makes sense to use a prefix of some kind). This helps cut down on line length for your code, allows you the opportunity to provide a more meaningful alias for tables with somewhat cryptic names, and overall helps to reduce the density of your query.
 
 ```sql
 
@@ -419,9 +424,11 @@ GROUP BY
 
 - Good comments are more important than how you lay them out
 - Put comments near the thing you're talking about
-- If you do something clever or difficult, comment to explain it
+- If you do something clever or difficult, leave a comment to explain it
 
-I recommend using the multi-line comments to create the equivalent of headings in largers queries, and single line comments for explanations.
+I recommend using the multi-line comments to create the equivalent of headings in largers queries, and single line comments for explanations. But, you do what you want--I'm usually just happy to have useful comments in the code at all!
+
+Only leave comments that explain or aid; do not leave a log of changes or dates of when sections were updated. That is what Git is for; logging activity by usuing comments just leads to a lot of unnecessary text.
 
 ### Capitalize Keywords According to Convenience
 
@@ -438,9 +445,11 @@ Operate according to readability: what will make it easier for you to find thing
 - Initial Caps for tables and views (with the exception of capitalizing acronyms)
 - lower_snake_case for everything else
 
-However, for long and complex queries, I often just lowercase everything simply because I can type it more easily (less use of the `shift` key). Or, if I'm in a rush trying to knock something out, I'll probably just type it however I see fit in the moment.
+However, ain't nobody got time for that. These days, I often just lowercase everything simply because I can type it more easily (less use of the `shift` key, and I don't have to think about that kind of formatting while I'm typing).
 
 My only real recommendation is not to go ALLCAPS on column names. There are enough options to capitalize other things; going that route just makes it all run together.
+
+Some examples of these styles:
 
 **lowercase everything**
 
@@ -523,7 +532,6 @@ FROM
   Database.Schema.Orders as ord,
   Database.Schema.Rewards_Program as prog,
   Database.Schema.Campaigns as camp
-
 
 -- This is gross. Links between tables are mixed in with
 -- filtering logic, which makes it difficult to see what
